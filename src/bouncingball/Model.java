@@ -32,6 +32,16 @@ class Model {
     void step(double deltaT) {
         // TODO this method implements one step of simulation with a step deltaT
         for (Ball b : balls) {
+
+            for (Ball b2 : balls) {
+
+                if(!b.equals(b2)) {
+                    if (checkCollision(b, b2)) {
+                        handleCollision(b, b2);
+                    }
+                }
+            }
+
             // detect collision with the border
             if (b.x < b.radius || b.x > areaWidth - b.radius) {
                 b.vx *= -1; // change direction of ball
@@ -56,6 +66,16 @@ class Model {
             b.y -= deltaT * (b.vy);
             }
         }
+
+    boolean checkCollision(Ball b1, Ball b2) {
+        Vec2d v = new Vec2d(b1.x,b1.y);
+        Vec2d v2 = new Vec2d(b2.x,b2.y);
+        return v.distance(v2) <= b1.radius + b2.radius;
+    }
+
+    void handleCollision(Ball b1, Ball b2) {
+
+    }
 
     //http://www.teacherschoice.com.au/maths_library/coordinates/polar_-_rectangular_conversion.htm
     //Convert rectangular coordinates to polar
