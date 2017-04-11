@@ -46,11 +46,16 @@ class Model {
             //x'' = 0
             b.x += deltaT * b.vx;
 
+            //Prevent ball from falling off screen
+            if (b.y - b.radius < 0) {
+                b.y = b.radius;
+            }
+
             //F = my''
-            b.y += deltaT * (b.vy + deltaT * b.g / 2);
-            b.vy += deltaT * b.g;
+            b.vy -= deltaT * b.g;
+            b.y -= deltaT * (b.vy);
+            }
         }
-    }
 
     //http://www.teacherschoice.com.au/maths_library/coordinates/polar_-_rectangular_conversion.htm
     //Convert rectangular coordinates to polar
