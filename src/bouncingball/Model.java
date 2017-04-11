@@ -45,9 +45,12 @@ class Model {
             // detect collision with the border
             if (b.x < b.radius || b.x > areaWidth - b.radius) {
                 b.vx *= -1; // change direction of ball
+                reduceVelocityX(b);
             }
             if (b.y < b.radius || b.y > areaHeight - b.radius) {
                 b.vy *= -1;
+                reduceVelocityY(b);
+                reduceVelocityX(b);
             }
 
             // compute new position during free fall according to euler's method
@@ -59,13 +62,24 @@ class Model {
             //Prevent ball from falling off screen
             if (b.y - b.radius < 0) {
                 b.y = b.radius;
+
             }
 
             //F = my''
             b.vy -= deltaT * b.g;
             b.y -= deltaT * (b.vy);
-            }
         }
+    }
+
+    //Simulate friction as loss of energy when hitting the ground or wall
+    void reduceVelocityX(Ball b) {
+        b.vx *= 0.95;
+    }
+
+    //Simulate a loss of energy when hitting the ground
+    void reduceVelocityY(Ball b) {
+        b.vy *= 0.95;
+    }
 
     boolean checkCollision(Ball b1, Ball b2) {
         Vec2d v = new Vec2d(b1.x,b1.y);
@@ -74,7 +88,10 @@ class Model {
     }
 
     void handleCollision(Ball b1, Ball b2) {
-
+        //Conservation of momentum
+        double momentum = (b1.m * b1.vx) + (b2.m * b2.vx);
+        //Conservation of kinetic energy
+        double kinetic = ((b1.m * Math.pow(b1.vx,2)) + (b2.m * Math.pow(b2.vx,2))) / 2;
     }
 
     //http://www.teacherschoice.com.au/maths_library/coordinates/polar_-_rectangular_conversion.htm
@@ -88,8 +105,8 @@ class Model {
 
     //Convert polar coordinates to rectangular
     Vec2d polarToRect(double r, double q) {
-        double x =r*Math.cos(q);
-        double y =r*Math.sin(q);
+        double x = r * Math.cos(q);
+        double y = r * Math.sin(q);
 
         return new Vec2d(x,y);
     }
@@ -106,16 +123,12 @@ class Model {
             this.vy = vy;
             this.radius = r;
             this.m = m;
-            kineticX = (m * Math.pow(vx,2)) / 2;
-            kineticY = (m * Math.pow(vy,2)) / 2;
-            momentumX = m * vx;
-            momentumY = m * vy;
+            g = -9.82;
         }
 
         /**
          * Position, speed, and radius of the ball. You may wish to add other attributes.
          */
-        double x, y, vx, vy, radius, m, kineticX, kineticY, momentumX, momentumY;
-        double g = -9.82;
+        double x, y, vx, vy, radius, m, g;
     }
 }
