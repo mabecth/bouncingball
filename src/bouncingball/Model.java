@@ -95,15 +95,23 @@ class Model {
     }
 
     //http://www.teacherschoice.com.au/maths_library/coordinates/polar_-_rectangular_conversion.htm
-    //Convert rectangular coordinates to polar
+    /**
+     * Converts rectangular coordinates to polar
+     * @param x the x-coordinate
+     * @param y the y-coordinate
+     */
     Vec2d rectToPolar(double x, double y) {
         double r = Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
         double q = Math.atan(y/x);
 
-        return new Vec2d(r,q);
+        return new Vec2d(r, q);
     }
 
-    //Convert polar coordinates to rectangular
+    /**
+     * Converts polar coordinates to rectangular
+     * @param r the distance from the origin
+     * @param q the angle in radians measured from the positive x-axis to the point
+     */
     Vec2d polarToRect(double r, double q) {
         double x = r * Math.cos(q);
         double y = r * Math.sin(q);
