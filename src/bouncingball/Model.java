@@ -25,8 +25,8 @@ class Model {
 
         // Initialize the model with a few balls
         balls = new Ball[2];
-        balls[0] = new Ball(width / 3, height * 0.9, 1.2, 1.6, 0.2,0.2);
-        balls[1] = new Ball(2 * width / 3, height * 0.7, -0.6, 0.6, 0.3,0.5);
+        balls[0] = new Ball(width / 3, height * 0.9, 0.8, 0, 0.2,0.2);
+        balls[1] = new Ball(2 * width / 3, height * 0.9, -0.4, 0, 0.3,0.5);
     }
 
     void step(double deltaT) {
@@ -44,57 +44,123 @@ class Model {
 
             // detect collision with the border
             if (b.x < b.radius || b.x > areaWidth - b.radius) {
+
+                if (b.x < b.radius) {
+                    b.x = b.radius;
+                } else if (b.x > areaWidth - b.radius) {
+                    b.x = areaWidth - b.radius;
+                }
                 b.vx *= -1; // change direction of ball
                 reduceVelocityX(b);
             }
+
             if (b.y < b.radius || b.y > areaHeight - b.radius) {
+
+                if (b.y < b.radius) {
+                    b.y = b.radius;
+                } else if (b.y > areaHeight - b.radius) {
+                    b.y = areaHeight - b.radius;
+                }
                 b.vy *= -1;
                 reduceVelocityY(b);
                 reduceVelocityX(b);
             }
 
-            // compute new position during free fall according to euler's method
+            //Compute new position during free fall according to Euler's method
             time += deltaT;
 
             //x'' = 0
             b.x += deltaT * b.vx;
 
-            //Prevent ball from falling off screen
-            if (b.y - b.radius < 0) {
-                b.y = b.radius;
-
-            }
-
             //F = my''
-            b.vy -= deltaT * b.g;
-            b.y -= deltaT * (b.vy);
+            b.vy += deltaT * b.g;
+            b.y += deltaT * (b.vy);
+
         }
     }
 
-    //Simulate friction as loss of energy when hitting the ground or wall
+    /**
+     * Simulate a loss of energy in vx
+     * @param b the affected ball
+     */
     void reduceVelocityX(Ball b) {
         b.vx *= 0.95;
     }
 
-    //Simulate a loss of energy when hitting the ground
+    /**
+     * Simulate a loss of energy in vy
+     * @param b the affected ball
+     */
     void reduceVelocityY(Ball b) {
         b.vy *= 0.95;
     }
 
+    /**
+     * Check if we have a collision between two balls
+     * @param b1 the first ball
+     * @param b2 the second ball
+     * @return if we a collision
+     */
     boolean checkCollision(Ball b1, Ball b2) {
         Vec2d v = new Vec2d(b1.x,b1.y);
         Vec2d v2 = new Vec2d(b2.x,b2.y);
-        return v.distance(v2) <= b1.radius + b2.radius;
+        return v.distance(v2) < b1.radius + b2.radius;
     }
 
+    /**
+     * Handles a collision between two balls
+     * @param b1 the first ball
+     * @param b2 the second ball
+     */
     void handleCollision(Ball b1, Ball b2) {
-        //Conservation of momentum
-        double momentum = (b1.m * b1.vx) + (b2.m * b2.vx);
-        //Conservation of kinetic energy
-        double kinetic = ((b1.m * Math.pow(b1.vx,2)) + (b2.m * Math.pow(b2.vx,2))) / 2;
-    }
 
-    //http://www.teacherschoice.com.au/maths_library/coordinates/polar_-_rectangular_conversion.htm
+        Vec2d v1;
+        Vec2d v2;
+
+        //Calculate dx and dy
+        double dx = Math.abs(b1.x - b2.x);
+        double dy = Math.abs(b1.y - b2.y);
+
+        //Calculate angle between b1 and b2
+        double beta = rectToPolar(dx, dy).y;
+
+        //Convert to polar coordinates
+        v1 = rectToPolar(b1.vx, b1.vy);
+        v2 = rectToPolar(b2.vx, b2.vy);
+
+        //Calculate angle in new coordinate system
+        v1.y -= beta;
+        v2.y -= beta;
+
+        //Convert to rectangular coordinates
+        v1 = polarToRect(v1.x, v1.y);
+        v2 = polarToRect(v2.x, v2.y);
+
+        //Velocities before collision
+        double u1 = v1.x;
+        double u2 = v2.x;
+
+        //Calculate new velocities (elastic collision)
+        v1.x = (u1 * (b1.m - b2.m) + 2 * b2.m * u2) / (b1.m + b2.m);
+        v2.x = (u2 * (b2.m - b1.m) + 2 * b1.m * u1) / (b1.m + b2.m);
+
+        //Convert to polar coordinates
+        v1 = rectToPolar(v1.x, v1.y);
+        v2 = rectToPolar(v1.x, v2.y);
+
+        //Set back to old angle
+        v1.y += beta;
+        v2.y += beta;
+
+        //Convert back to x/y coordinates
+        v1 = polarToRect(v1.x, v1.y);
+        v2 = polarToRect(v2.x, v2.y);
+        b1.vx = v1.x;
+        b1.vy = v1.y;
+        b2.vx = v2.x;
+        b2.vy = v2.y;
+    }
+    
     /**
      * Converts rectangular coordinates to polar
      * @param x the x-coordinate
