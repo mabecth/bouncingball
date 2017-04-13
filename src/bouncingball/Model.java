@@ -25,24 +25,28 @@ class Model {
 
         // Initialize the model with a few balls
         balls = new Ball[2];
-        balls[0] = new Ball(width / 3, height * 0.9, 0.8, 0, 0.2,0.2);
-        balls[1] = new Ball(2 * width / 3, height * 0.9, -0.4, 0, 0.3,0.5);
+        balls[0] = new Ball(width / 3, height * 0.5, 0.8, 0, 0.2,0.2);
+        balls[1] = new Ball(3 * width / 3, height * 0.9, -0.4, 0, 0.3,0.5);
     }
 
     void step(double deltaT) {
         // TODO this method implements one step of simulation with a step deltaT
         for (Ball b : balls) {
 
+            move(b, deltaT);
             for (Ball b2 : balls) {
 
                 if(!b.equals(b2)) {
                     if (checkCollision(b, b2)) {
+                        solveOverlap(b,b2);
                         handleCollision(b, b2);
+                        move(b, deltaT);
+                        move(b2, deltaT);
                     }
                 }
             }
 
-            // detect collision with the border
+            //Detect collision with the border
             if (b.x < b.radius || b.x > areaWidth - b.radius) {
 
                 if (b.x < b.radius) {
@@ -54,6 +58,7 @@ class Model {
                 reduceVelocityX(b);
             }
 
+            //Detect collision with the border
             if (b.y < b.radius || b.y > areaHeight - b.radius) {
 
                 if (b.y < b.radius) {
@@ -65,18 +70,23 @@ class Model {
                 reduceVelocityY(b);
                 reduceVelocityX(b);
             }
-
-            //Compute new position during free fall according to Euler's method
-            time += deltaT;
-
-            //x'' = 0
-            b.x += deltaT * b.vx;
-
-            //F = my''
-            b.vy += deltaT * b.g;
-            b.y += deltaT * (b.vy);
-
         }
+    }
+
+    /**
+     * Move a ball
+     * @param b the affected ball
+     * @param deltaT simulation step
+     */
+    void move(Ball b, double deltaT) {
+        time += deltaT;
+
+        //x'' = 0
+        b.x += deltaT * b.vx;
+
+        //F = my''
+        b.vy += deltaT * b.g;
+        b.y += deltaT * (b.vy);
     }
 
     /**
@@ -84,7 +94,7 @@ class Model {
      * @param b the affected ball
      */
     void reduceVelocityX(Ball b) {
-        b.vx *= 0.95;
+        b.vx *= 0.98;
     }
 
     /**
@@ -92,7 +102,7 @@ class Model {
      * @param b the affected ball
      */
     void reduceVelocityY(Ball b) {
-        b.vy *= 0.95;
+        b.vy *= 0.98;
     }
 
     /**
@@ -102,9 +112,7 @@ class Model {
      * @return if we a collision
      */
     boolean checkCollision(Ball b1, Ball b2) {
-        Vec2d v = new Vec2d(b1.x,b1.y);
-        Vec2d v2 = new Vec2d(b2.x,b2.y);
-        return v.distance(v2) < b1.radius + b2.radius;
+        return Math.sqrt((b2.x - b1.x)*(b2.x - b1.x)+(b2.y - b1.y)*(b2.y - b1.y)) < b1.radius + b2.radius;
     }
 
     /**
@@ -160,7 +168,46 @@ class Model {
         b2.vx = v2.x;
         b2.vy = v2.y;
     }
-    
+
+    /**
+     * Prevent overlapping of two balls
+     * @param b1 the first ball
+     * @param b2 the second ball
+     */
+    void solveOverlap(Ball b1, Ball b2) {
+
+        double dx = (b1.x - b2.x);
+        double dy = (b1.y - b2.y);
+        double radiusSum = b1.radius + b2.radius;
+
+        if (dx <=  0) {
+            double diffX = Math.abs(dx - radiusSum);
+            if (diffX > 0) {
+                b1.x -= diffX / 2;
+                b2.x += diffX / 2;
+            }
+        } else {
+            double diffX = Math.abs(dx - radiusSum);
+            if (diffX < 0) {
+                b1.x -= diffX / 2;
+                b2.x += diffX / 2;
+            }
+        }
+        if (dy <= 0) {
+            double diffY = Math.abs(dy - radiusSum);
+            if (diffY > 0) {
+                b1.x -= diffY / 2;
+                b2.x += diffY / 2;
+            }
+        } else {
+            double diffY = Math.abs(dy - radiusSum);
+            if (diffY < 0) {
+                b1.x -= diffY / 2;
+                b2.x += diffY / 2;
+            }
+        }
+    }
+
     /**
      * Converts rectangular coordinates to polar
      * @param x the x-coordinate
