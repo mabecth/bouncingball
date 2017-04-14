@@ -26,8 +26,8 @@ class Model {
 
         // Initialize the model with a few balls
         balls = new Ball[2];
-        balls[0] = new Ball(width / 3, height * 0.6, 4, 0, 0.2,3);
-        balls[1] = new Ball(2 * width / 3, height * 0.6, -6, 0, 0.3,5);
+        balls[0] = new Ball(width / 3, height * 0.6, 0.4, 0, 0.2,3);
+        balls[1] = new Ball(3 * width / 3, height * 0.9, -0.6, 0, 0.3,5);
     }
 
     void step(double deltaT) {
@@ -184,10 +184,10 @@ class Model {
      * @param b2 the second ball
      */
     void solveOverlap(Ball b1, Ball b2) {
-
         double dx = (b1.x - b2.x);
         double dy = (b1.y - b2.y);
         double radiusSum = b1.radius + b2.radius;
+
         if (dx <  0) {
             double diffX = dx + radiusSum;
             if (diffX > 0) {
@@ -223,31 +223,24 @@ class Model {
      */
     Vec2d rectToPolar(double x, double y) {
         double r = Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
-        double q = 0;
+        double q;
+
         if (x >= 0 && y >= 0) {
             //First quadrant
             q = Math.atan(y/x);
-            System.out.println("First");
         } else if(x < 0 && y > 0) {
             //Second quadrant
-            if (Math.atan(y/x) != 0)
-                r *= -1;
-            q = Math.atan(y/x);// + Math.PI;
-            System.out.println("Second");
+            r *= -1;
+            q = Math.atan(y/x);
         } else if(x < 0 && y < 0) {
             //Third quadrant
-            if (Math.atan(y/x) != 0)
-                r *= -1;
-            q = Math.atan(y/x); //+ Math.PI;
-            System.out.println("Third");
+            r *= -1;
+            q = Math.atan(y/x);
         } else {
             //Fourth quadrant
-            if (Math.atan(y/x) != 0)
-            q = Math.atan(y/x);// Math.PI * 2;
             r *= -1;
-            System.out.println("Fourth");
+            q = Math.atan(y/x);
         }
-
         return new Vec2d(r, q);
     }
 
