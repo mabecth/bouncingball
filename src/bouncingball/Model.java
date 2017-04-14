@@ -17,8 +17,9 @@ class Model {
     double areaWidth, areaHeight;
 
     Ball [] balls;
-    double time = 0;
-    boolean collisionHandled = false;
+    private double time = 0;
+    private double deltaT;
+    private boolean collisionHandled = false;
 
     Model(double width, double height) {
         areaWidth = width;
@@ -26,24 +27,24 @@ class Model {
 
         // Initialize the model with a few balls
         balls = new Ball[2];
-        balls[0] = new Ball(width / 3, height * 0.6, 0.4, 0, 0.2,3);
-        balls[1] = new Ball(3 * width / 3, height * 0.9, -0.6, 0, 0.3,5);
+        balls[0] = new Ball(width * 0.9, height * 0.9, -0.4, 0, 0.2,3);
+        balls[1] = new Ball(width * 0.3, height * 0.3, 0.6, 0, 0.3,5);
+        //balls[0] = new Ball(width / 6, height * 0.9, 0, -0.4, 0.2,3);
+        //balls[1] = new Ball(width / 6, height * 0.3, 0, 0.6, 0.3,5);
     }
 
     void step(double deltaT) {
         // TODO this method implements one step of simulation with a step deltaT
+        this.deltaT = deltaT;
         for (Ball b : balls) {
 
-            move(b, deltaT);
+            move(b);
             for (Ball b2 : balls) {
 
                 if(!b.equals(b2)) {
                     if (checkCollision(b, b2)) {
+                        handleOverlap(b, b2);
                         handleCollision(b, b2, b.vx, b2.vx);
-                        move(b, deltaT);
-                        move(b2, deltaT);
-                        //System.out.println(rectToPolar(-1,-1));
-                        //System.exit(0);
                     }
                 }
             }
@@ -78,9 +79,8 @@ class Model {
     /**
      * Move a ball
      * @param b the affected ball
-     * @param deltaT simulation step
      */
-    void move(Ball b, double deltaT) {
+    void move(Ball b) {
         time += deltaT;
 
         //x'' = 0
@@ -114,7 +114,7 @@ class Model {
      * @return if we a collision
      */
     boolean checkCollision(Ball b1, Ball b2) {
-        return Math.sqrt((b2.x - b1.x)*(b2.x - b1.x)+(b2.y - b1.y)*(b2.y - b1.y)) < b1.radius + b2.radius;
+        return Math.sqrt((b2.x - b1.x)*(b2.x - b1.x)+(b2.y - b1.y)*(b2.y - b1.y)) <= b1.radius + b2.radius;
     }
 
     /**
@@ -151,7 +151,6 @@ class Model {
             v1.x = (u1 * (b1.m - b2.m) + 2 * b2.m * u2) / (b1.m + b2.m);
             v2.x = (u2 * (b2.m - b1.m) + 2 * b1.m * u1) / (b1.m + b2.m);
 
-            //System.out.println(v1.x + " " + v2.x + " " + v1.y + " " + v2.y);
             //Convert to polar coordinates
             v1 = rectToPolar(v1.x, v1.y);
             v2 = rectToPolar(v2.x, v2.y);
@@ -163,15 +162,26 @@ class Model {
             //Convert back to x/y coordinates
             v1 = polarToRect(v1.x, v1.y);
             v2 = polarToRect(v2.x, v2.y);
-            //System.out.println(v1.x + " " + v2.x + " " + v1.y + " " + v2.y);
+
+            //Set new velocities
             b1.vx = v1.x;
             b1.vy = v1.y;
             b2.vx = v2.x;
             b2.vy = v2.y;
 
-            System.out.println("b1 " + "vx: " + b1.vx + " r: " + b1.radius + "\nb2 " + "vx: " + b2.vx + " r: " + b2.radius);
+            /*
+            //Max velocity
+            if (Math.abs(b1.vx) > 3) {
+                b1.vx = Math.signum(b1.vx) * 3;
+            } else if (Math.abs(b2.vx) > 3) {
+                b2.vx = Math.signum(b2.vx) * 3;
+            } else if (Math.abs(b1.vy) > 3) {
+                b1.vy = Math.signum(b1.vy) * 3;
+            } else if (Math.abs(b2.vy) > 3) {
+                b2.vy = Math.signum(b2.vy) * 3;
+            }
+            */
 
-            solveOverlap(b1, b2);
             collisionHandled = true;
         } else {
             collisionHandled = false;
@@ -183,36 +193,30 @@ class Model {
      * @param b1 the first ball
      * @param b2 the second ball
      */
-    void solveOverlap(Ball b1, Ball b2) {
-        double dx = (b1.x - b2.x);
-        double dy = (b1.y - b2.y);
-        double radiusSum = b1.radius + b2.radius;
+    void handleOverlap(Ball b1, Ball b2) {
 
-        if (dx <  0) {
-            double diffX = dx + radiusSum;
-            if (diffX > 0) {
-                b1.x -= diffX / 2;
-                b2.x += diffX / 2;
-            }
-        } else if (dx > 0) {
-            double diffX = dx - radiusSum;
-            if (diffX < 0) {
-                b1.x -= diffX / 2;
-                b2.x += diffX / 2;
-            }
-        }
-        if (dy < 0) {
-            double diffY = dy + radiusSum;
-            if (diffY > 0) {
-                b1.y -= diffY / 2;
-                b2.y += diffY / 2;
-            }
-        } else if (dy > 0) {
-            double diffY = dy - radiusSum;
-            if (diffY < 0) {
-                b1.y -= diffY / 2;
-                b2.y += diffY / 2;
-            }
+        double radiusSum = b1.radius + b2.radius;
+        double diff = Math.sqrt((b2.x - b1.x)*(b2.x - b1.x)+(b2.y - b1.y)*(b2.y - b1.y)) - radiusSum;
+        Vec2d v1;
+        Vec2d v2;
+
+        //Determine how much we need to move the balls so that they do not collide
+        if (diff <= 0) {
+            v1 = rectToPolar(b1.x, b1.y);
+            v2 = rectToPolar(b2.x, b2.y);
+
+            //Move the balls in opposite direction
+            v1.x -= diff / 2;
+            v2.x += diff / 2;
+
+            v1 = polarToRect(v1.x, v1.y);
+            v2 = polarToRect(v2.x, v2.y);
+
+            //Set new positions
+            b1.x = v1.x;
+            b1.y = v1.y;
+            b2.x = v2.x;
+            b2.y = v2.y;
         }
     }
 
