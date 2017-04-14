@@ -4,20 +4,12 @@ import com.sun.javafx.geom.Vec2d;
 
 /**
  * The physics model.
- *
- * This class is where you should implement your bouncing balls model.
- *
- * The code has intentionally been kept as simple as possible, but if you wish, you can improve the design.
- *
- * @author Simon Robillard
- *
  */
 class Model {
 
     double areaWidth, areaHeight;
 
     Ball [] balls;
-    private double time = 0;
     private double deltaT;
     private boolean collisionHandled = false;
 
@@ -27,20 +19,21 @@ class Model {
 
         // Initialize the model with a few balls
         balls = new Ball[2];
-        balls[0] = new Ball(width * 0.9, height * 0.9, -0.4, 0, 0.2,3);
-        balls[1] = new Ball(width * 0.2, height * 0.3, 0.6, 0, 0.3,5);
-        //balls[0] = new Ball(width / 6, height * 0.9, 0, -0.4, 0.2,3);
-        //balls[1] = new Ball(width / 6, height * 0.3, 0, 0.6, 0.3,5);
+        balls[0] = new Ball(width * 0.9, height * 0.7, -0.4, 0, 0.2,0.4);
+        balls[1] = new Ball(width * 0.2, height * 0.7, 0.7, 0, 0.3,0.5);
+        //balls[2] = new Ball(width * 0.5, height * 0.6, 0.2, -0.4, 0.1,1);
+        //balls[3] = new Ball(width * 0.6, height * 0.5, 0, 0.6, 0.3,5);
     }
 
     void step(double deltaT) {
-        // TODO this method implements one step of simulation with a step deltaT
         this.deltaT = deltaT;
+
         for (Ball b : balls) {
 
             move(b);
             for (Ball b2 : balls) {
 
+                //Check for collisions
                 if(!b.equals(b2)) {
                     if (checkCollision(b, b2)) {
                         handleOverlap(b, b2);
@@ -57,7 +50,7 @@ class Model {
                 } else if (b.x > areaWidth - b.radius) {
                     b.x = areaWidth - b.radius;
                 }
-                b.vx *= -1; // change direction of ball
+                b.vx *= -1;
                 reduceVelocityX(b);
             }
 
@@ -81,8 +74,6 @@ class Model {
      * @param b the affected ball
      */
     void move(Ball b) {
-        time += deltaT;
-
         //x'' = 0
         b.x += deltaT * b.vx;
 
@@ -274,10 +265,6 @@ class Model {
             this.m = m;
             g = -9.82;
         }
-
-        /**
-         * Position, speed, and radius of the ball. You may wish to add other attributes.
-         */
         double x, y, vx, vy, radius, m, g;
     }
 }
