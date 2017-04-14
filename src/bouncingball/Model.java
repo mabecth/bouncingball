@@ -28,7 +28,7 @@ class Model {
         // Initialize the model with a few balls
         balls = new Ball[2];
         balls[0] = new Ball(width * 0.9, height * 0.9, -0.4, 0, 0.2,3);
-        balls[1] = new Ball(width * 0.3, height * 0.3, 0.6, 0, 0.3,5);
+        balls[1] = new Ball(width * 0.2, height * 0.3, 0.6, 0, 0.3,5);
         //balls[0] = new Ball(width / 6, height * 0.9, 0, -0.4, 0.2,3);
         //balls[1] = new Ball(width / 6, height * 0.3, 0, 0.6, 0.3,5);
     }
@@ -238,7 +238,7 @@ class Model {
             q = Math.atan(y/x);
         } else if(x < 0 && y < 0) {
             //Third quadrant
-            r *= -1;
+            //r *= -1;
             q = Math.atan(y/x);
         } else {
             //Fourth quadrant
