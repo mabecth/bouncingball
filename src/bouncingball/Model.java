@@ -28,17 +28,17 @@ class Model {
     void step(double deltaT) {
         this.deltaT = deltaT;
 
-        for (Ball b : balls) {
+        for (int i = 0; i < balls.length; i++) {
 
+            Ball b = balls[i];
             move(b);
-            for (Ball b2 : balls) {
+            for (int j = i + 1; j < balls.length; j++) {
 
+                Ball b2 = balls[j];
                 //Check for collisions
-                if(!b.equals(b2)) {
-                    if (checkCollision(b, b2)) {
-                        handleOverlap(b, b2);
-                        handleCollision(b, b2, b.vx, b2.vx);
-                    }
+                if (checkCollision(b, b2)) {
+                    handleOverlap(b, b2);
+                    handleCollision(b, b2, b.vx, b2.vx);
                 }
             }
 
