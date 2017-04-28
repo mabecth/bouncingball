@@ -11,7 +11,6 @@ class Model {
 
     Ball [] balls;
     private double deltaT;
-    private boolean move = true;
 
     Model(double width, double height) {
         areaWidth = width;
@@ -19,9 +18,9 @@ class Model {
 
         // Initialize the model with a few balls
         balls = new Ball[2];
-        balls[0] = new Ball(width * 0.6, height * 0.5, 0.5, 0, 0.2,0.4);
-        balls[1] = new Ball(width * 0.3, height * 0.8, -0.5, 0, 0.3,0.5);
-        //balls[2] = new Ball(width * 0.5, height * 0.6, 0.2, -0.4, 0.1,1);
+        balls[0] = new Ball(width * 0.3, height * 0.6, 0.5, 0, 0.2,0.4);
+        balls[1] = new Ball(width * 0.7, height * 0.5, -0.3, 0, 0.4,0.8);
+        //balls[2] = new Ball(width * 0.1, height * 0.4, -0.7, 0, 0.3,0.6);
     }
 
     void step(double deltaT) {
@@ -30,15 +29,14 @@ class Model {
         for (int i = 0; i < balls.length; i++) {
 
             Ball b = balls[i];
+            move(b);
             for (int j = i + 1; j < balls.length; j++) {
 
                 Ball b2 = balls[j];
                 //Check for collisions
                 if (checkCollision(b, b2)) {
-                    move = false;
                     handleOverlap(b, b2);
-                    handleCollision(b, b2, b.vx, b2.vx);
-                    move = true;
+                    handleCollision(b, b2);
                 }
             }
 
@@ -66,7 +64,6 @@ class Model {
                 reduceVelocityY(b);
                 reduceVelocityX(b);
             }
-            move(b);
         }
     }
 
@@ -75,12 +72,10 @@ class Model {
      * @param b the affected ball
      */
     void move(Ball b) {
-        if (move) {
-            b.x += deltaT * b.vx;
+        b.vy += deltaT * b.g;
 
-            b.vy += deltaT * b.g;
-            b.y += deltaT * (b.vy);
-        }
+        b.x += deltaT * b.vx;
+        b.y += deltaT * (b.vy);
     }
 
     /**
@@ -114,56 +109,62 @@ class Model {
      * @param b1 the first ball
      * @param b2 the second ball
      */
-    void handleCollision(Ball b1, Ball b2, double u1, double u2) {
-            Vec2d v1;
-            Vec2d v2;
+    void handleCollision(Ball b1, Ball b2) {
+        Vec2d v1;
+        Vec2d v2;
 
-            //Calculate dx and dy
-            double dx = Math.abs(b1.x - b2.x);
-            double dy = Math.abs(b1.y - b2.y);
+        double u1x = b1.vx;
+        double u2x = b2.vx;
+        double u1y = b1.vy;
+        double u2y = b2.vy;
 
-            //Calculate angle between b1 and b2
-            double beta = rectToPolar(dx, dy).y;
+        //Calculate dx and dy
+        double dx = Math.abs(b1.x - b2.x);
+        double dy = Math.abs(b1.y - b2.y);
 
-            //Rotation matrices
-            double[][] matrix = {{Math.cos(beta),Math.sin(beta)},{-Math.sin(beta),Math.cos(beta)}};
-            double[][] inverse = {{Math.cos(beta),-Math.sin(beta)},{Math.sin(beta),Math.cos(beta)}};
+        //Calculate angle between b1 and b2
+        double beta = rectToPolar(dx, dy).y;
 
-            v1 = new Vec2d(b1.vx, b1.vy);
-            v2 = new Vec2d(b2.vx, b2.vy);
+        //Rotation matrices
+        double[][] rotate = {{Math.cos(beta),Math.sin(beta)},{-Math.sin(beta),Math.cos(beta)}};
+        double[][] rotateInverse = {{Math.cos(beta),-Math.sin(beta)},{Math.sin(beta),Math.cos(beta)}};
 
-            //Rotate coordinate system
-            v1 = new Vec2d(matrix[0][0]*v1.x + matrix[0][1]*v1.y,matrix[1][0]*v1.x + matrix[1][1]*v1.y);
-            v2 = new Vec2d(matrix[0][0]*v2.x + matrix[0][1]*v2.y,matrix[1][0]*v2.x + matrix[1][1]*v2.y);
+        v1 = new Vec2d(b1.vx, b1.vy);
+        v2 = new Vec2d(b2.vx, b2.vy);
 
-            //Calculate new velocities (elastic collision)
-            v1.x = (u1 * (b1.m - b2.m) + 2 * b2.m * u2) / (b1.m + b2.m);
-            v2.x = (u2 * (b2.m - b1.m) + 2 * b1.m * u1) / (b1.m + b2.m);
+        //Rotate coordinate system
+        v1 = new Vec2d(rotate[0][0]*v1.x + rotate[0][1]*v1.y,rotate[1][0]*v1.x + rotate[1][1]*v1.y);
+        v2 = new Vec2d(rotate[0][0]*v2.x + rotate[0][1]*v2.y,rotate[1][0]*v2.x + rotate[1][1]*v2.y);
 
-            //Rotate back coordinate system
-            v1 = new Vec2d(inverse[0][0]*v1.x + inverse[0][1]*v1.y,inverse[1][0]*v1.x + inverse[1][1]*v1.y);
-            v2 = new Vec2d(inverse[0][0]*v2.x + inverse[0][1]*v2.y,inverse[1][0]*v2.x + inverse[1][1]*v2.y);
+        //Calculate new velocities (elastic collision)
+        v1.x = (u1x * (b1.m - b2.m) + 2 * b2.m * u2x) / (b1.m + b2.m);
+        v2.x = (u2x * (b2.m - b1.m) + 2 * b1.m * u1x) / (b1.m + b2.m);
+        v1.y = (u1y * (b1.m - b2.m) + 2 * b2.m * u2y) / (b1.m + b2.m);
+        v2.y = (u2y * (b2.m - b1.m) + 2 * b1.m * u1y) / (b1.m + b2.m);
 
-            //Set new velocities
-            b1.vx = v1.x;
-            b1.vy = v1.y;
-            b2.vx = v2.x;
-            b2.vy = v2.y;
+        //Rotate back coordinate system
+        v1 = new Vec2d(rotateInverse[0][0]*v1.x + rotateInverse[0][1]*v1.y,rotateInverse[1][0]*v1.x + rotateInverse[1][1]*v1.y);
+        v2 = new Vec2d(rotateInverse[0][0]*v2.x + rotateInverse[0][1]*v2.y,rotateInverse[1][0]*v2.x + rotateInverse[1][1]*v2.y);
+
+        //Set new velocities
+        b1.vx = v1.x;
+        b1.vy = v1.y;
+        b2.vx = v2.x;
+        b2.vy = v2.y;
     }
 
     /**
-     * Handle overlapping of two balls
+     * Handle overlapping of two balls, move them apart until they no longer collide
      * @param b1 the first ball
      * @param b2 the second ball
      */
     void handleOverlap(Ball b1, Ball b2) {
 
         while(checkCollision(b1, b2)) {
-            b1.x += deltaT / 100 * -1 * b1.vx;
-            b1.y += deltaT / 100 * -1 * b1.vy;
-
-            b2.x += deltaT / 100 * -1 * b2.vx;
-            b2.y += deltaT / 100 * -1 * b2.vy;
+            b1.x += deltaT / 200 * -1 * b1.vx;
+            b1.y += deltaT / 200 * -1 * b1.vy;
+            b2.x += deltaT / 200 * -1 * b2.vx;
+            b2.y += deltaT / 200 * -1 * b2.vy;
         }
     }
 
