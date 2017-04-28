@@ -20,7 +20,11 @@ class Model {
         balls = new Ball[2];
         balls[0] = new Ball(width * 0.3, height * 0.65, 0.45, 0, 0.2,0.4);
         balls[1] = new Ball(width * 0.7, height * 0.55, -0.3, 0, 0.4,0.8);
-        //balls[2] = new Ball(width * 0.1, height * 0.4, -0.7, 0, 0.3,0.6);
+        /* Three balls example
+        balls[0] = new Ball(width * 0.3, height * 0.8, 0.5, 0, 0.2,0.4);
+        balls[1] = new Ball(width * 0.75, height * 0.5, -0.5, 0, 0.3,0.6);
+        balls[2] = new Ball(width * 0.1, height * 0.40, -0.7, 0, 0.3,0.6);
+        */
     }
 
     void step(double deltaT) {
